@@ -3,65 +3,70 @@
 // Supported Functions:
 // Use,Group,Get,Post,Put,Delete,Options,Patch,Head,WebSocket,Listen
 
-#pragma once // Include guard
+#pragma once  // Include guard
 
 #include <string>
 #include <unordered_map>
 
-#include "Header.hpp"
+#include "Request.hpp"
 #include "Route.hpp"
+// #include "Route.hpp"
 #include <iostream>
-#include <thread>
 #include <vector>
-#ifdef _WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#endif
 
 namespace muxpp {
-struct Route {
-  std::string path;
-  std::string method;
-  std::function<void()> handler;
-  Route *parent;
-};
+
 class App {
-public:
-  App();
-  ~App();
-  void Use(const std::string &path, std::function<void()> handler);
-  void Group(const std::string &path, std::function<void()> handler);
-  void Get(const std::string &path, std::function<void()> handler);
-  void Post(const std::string &path, std::function<void()> handler);
-  void Put(const std::string &path, std::function<void()> handler);
-  void Delete(const std::string &path, std::function<void()> handler);
-  void Options(const std::string &path, std::function<void()> handler);
-  void Patch(const std::string &path, std::function<void()> handler);
-  void Head(const std::string &path, std::function<void()> handler);
-  void Any(const std::string &path, std::function<void()> handler);
-  void WebSocket(const std::string &path, std::function<void()> handler);
-  void Listen(const std::string &port);
-  void Listen(const std::string &port, const std::string &host);
-  void Listen(const std::string &port, const std::string &host,
-              const std::string &protocol);
+ public:
+  explicit App(
+      const std::string& port = "3732", const std::string& host = "localhost",
+      const std::string& protocol = "HTTP/1.1",
+      std::unordered_map<std::string, std::string>* certificates = nullptr) {
+    this->port_ = port;
+    this->host_ = host;
+    this->protocol_ = protocol;
+    if (certificates != nullptr) {
+      this->certificates_ = *certificates;
+    }
+  };
+  ~App() { std::cout << "App destroyed" << std::endl; };
+  // Middleware
+  App Use(MiddleWareFunc&& handler) && {
 
-private:
-  std::vector<Route> routes;
-  std::string host;
-  std::string port;
-  std::string protocol;
-  int server_fd;
-  int new_socket;
-  int valread;
-  struct sockaddr_in address;
-  int addrlen;
-  char buffer[1024] = {0};
-  std::string response = "HTTP/1.1 200 OK\nContent-Type: "
-                         "text/plain\nContent-Length: 12\n\nHello world!";
+    middlewares_.push_back(handler);
+    return std::move(*this);
+  };
+
+  void Listen() {
+    std::cout << "Listening on " << host_ << ":" << port_ << std::endl;
+  };
+  std::string printAllRoutes() {
+    std::string result;
+    for (const auto& route : routes_) {
+      result += route.method + " " + route.path + "\n";
+    }
+    return result;
+  }
+  void addHandler(Route& route) { routes_.push_back(route); }
+
+ private:
+  std::vector<Route> routes_;
+  std::string host_;
+  std::string port_;
+  std::string protocol_;  // HTTP/1.1
+  std::string basePath_;
+  std::vector<MiddleWareFunc> middlewares_;
+  std::unordered_map<std::string, std::string> certificates_;
+
+  void createNewRoute(const std::string& path, const std::string& method,
+                      const RequestHandler& handler) {
+    Route route;
+    route.path = path;
+    route.method = method;
+    route.handler = handler;
+    route.parent = nullptr;
+    routes_.push_back(route);
+  }
 };
 
-} // namespace muxpp
+}  // namespace muxpp

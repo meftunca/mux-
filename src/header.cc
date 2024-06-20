@@ -40,8 +40,6 @@
 //   return 0;
 // }
 
-#include "ada/ada.cpp"
-
 #include <iostream>
 #include <sstream>
 #include <stdexcept> // std::runtime_error için

@@ -1,16 +1,16 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "mux",
-    hdrs = glob(["*.hpp"]),
+    name = "Socket",
+    srcs = glob(["**/*.cc"]),
+    hdrs = glob([
+        "**/*.h",
+        "**/*.hpp",
+    ]),
     # -lpthread
-    linkopts = [
-        "-pthread",
-        "-L/opt/homebrew/opt/gperftools/lib",
-    ],
+    linkopts = ["-pthread"],
     visibility = ["//visibility:public"],
     deps = [
-        "//ada",
         "//taskflow",
     ],
 )

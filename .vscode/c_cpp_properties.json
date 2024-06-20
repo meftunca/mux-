@@ -14,7 +14,9 @@
             "cppStandard": "c++20",
             "intelliSenseMode": "macos-clang-arm64",
             "compilerArgs": [
-                "-fcoroutines" // GCC ve Clang için
+                "-fexperimental-library",
+                "-fcoroutines",
+                "-L/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++"
             ]
         }
     ],
